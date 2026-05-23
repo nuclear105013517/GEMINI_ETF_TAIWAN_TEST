@@ -4,3 +4,4 @@ FinMind
 pandas
 numpy
 requests
+tpdm
