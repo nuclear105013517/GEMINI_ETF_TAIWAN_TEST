@@ -2,6 +2,8 @@ streamlit
 yfinance
 FinMind
 pandas
-numpy
+numpy<2.0.0
 requests
-tpdm
+tqdm
+pydantic<2.0.0
+lxml
