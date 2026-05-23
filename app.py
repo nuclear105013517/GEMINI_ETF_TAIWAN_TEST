@@ -61,7 +61,7 @@ morandi_css = """
 st.markdown(morandi_css, unsafe_allow_html=True)
 
 # ==========================================
-# 核心邏輯 (與原始碼完全一致，無更動)
+# 核心邏輯
 # ==========================================
 def parse_investment_horizon(text):
     text = text.replace(" ", "")
@@ -138,7 +138,10 @@ class ETFAnalyzer:
                     res = requests.get(url, headers=headers, timeout=5).json()
                     if res.get('stat') == 'OK' and 'data' in res:
                         fields = res['fields']
-                        idx_id, idx_f, idx_s, idx_d = fields.index("證券代號") if "證券代號" in fields else 0, next((i for i, f in enumerate(fields) if "外" in f and "買賣超" in f), 4), next((i for i, f in enumerate(fields) if "投信" in f and "買賣超" in f), 10), next((i for i, f in enumerate(fields) if "自營商" in f and "買賣超" in f), 11)
+                        idx_id = fields.index("證券代號") if "證券代號" in fields else 0
+                        idx_f = next((i for i, f in enumerate(fields) if "外" in f and "買賣超" in f), 4)
+                        idx_s = next((i for i, f in enumerate(fields) if "投信" in f and "買賣超" in f), 10)
+                        idx_d = next((i for i, f in enumerate(fields) if "自營商" in f and "買賣超" in f), 11)
                         for row in res['data']:
                             if row[idx_id].strip().replace('"', '') == pure_ticker:
                                 self.institutional_data = {'foreign': to_shares(row[idx_f]), 'sitc': to_shares(row[idx_s]), 'dealer': to_shares(row[idx_d]), 'date': date_str}
@@ -166,7 +169,11 @@ class ETFAnalyzer:
         price_diff = (high_9 - low_9).replace(0, np.nan) 
         df['RSV'] = ((df['Close'] - low_9) / price_diff) * 100
         df['RSV'] = df['RSV'].fillna(50)
-        df['K'], df['D'] = df['RSV'].ewm(com=2, adjust=False).mean(), df['K'].ewm(com=2, adjust=False).mean()
+        
+        # [修復] 將 K 與 D 拆為兩行計算，避免 KeyError
+        df['K'] = df['RSV'].ewm(com=2, adjust=False).mean()
+        df['D'] = df['K'].ewm(com=2, adjust=False).mean()
+        
         df['STD_20'] = df['Close'].rolling(window=20).std()
         df['MACD'] = df['Close'].ewm(span=12, adjust=False).mean() - df['Close'].ewm(span=26, adjust=False).mean()
         df['MACD_Signal'] = df['MACD'].ewm(span=9, adjust=False).mean()
@@ -264,7 +271,10 @@ class StockEvaluator:
         price_diff = (high_max - low_min).replace(0, np.nan)
         self.df['RSV'] = ((self.df['Close'] - low_min) / price_diff) * 100
         self.df['RSV'] = self.df['RSV'].fillna(50)
-        self.df['K'], self.df['D'] = self.df['RSV'].ewm(com=2, adjust=False).mean(), self.df['K'].ewm(com=2, adjust=False).mean()
+        
+        # [修復] 將 K 與 D 拆為兩行計算，避免 KeyError
+        self.df['K'] = self.df['RSV'].ewm(com=2, adjust=False).mean()
+        self.df['D'] = self.df['K'].ewm(com=2, adjust=False).mean()
 
     def analyze_fundamentals(self):
         score, details = 0, []
@@ -428,14 +438,13 @@ st.write("這是一套結合基本面、技術面與籌碼面的法人級量化�
 
 col1, col2 = st.columns(2)
 with col1:
-    raw_ticker = st.text_input("1. 請輸入股票或 ETF 代號 (如: 0050, 2330, TSLA)", value="2330").strip().upper().replace('.TW', '').replace('.TWO', '')
+    raw_ticker = st.text_input("1. 請輸入股票或 ETF 代號 (如: 0050, 2330, TSLA)", value="2412").strip().upper().replace('.TW', '').replace('.TWO', '')
 with col2:
     horizon_input = st.text_input("2. 請輸入預計投資的時間年限 (如: 10年, 半年, 存股, 當沖)", value="1年").strip()
 
 if st.button("🚀 開始分析"):
     if raw_ticker:
         with st.spinner("正在連接市場資料庫並進行大量運算，請稍候..."):
-            # 使用 io 捕捉原本在終端機 print 出來的文字，以利呈現在網頁上
             f = io.StringIO()
             with redirect_stdout(f):
                 try:
@@ -463,7 +472,6 @@ if st.button("🚀 開始分析"):
                     print(f"\n❌ 系統執行過程中發生錯誤: {e}")
                     print("請檢查您的網路連線，或確認輸入的證券代號是否有效。")
             
-            # 將運算結果顯示在 Streamlit 網頁上
             report_output = f.getvalue()
             st.code(report_output, language="text")
             st.success("分析完成！")
