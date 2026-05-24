@@ -4,7 +4,7 @@ FinMind
 pandas
 numpy<2.0.0
 requests
+tqdm
 pydantic<2.0.0
 lxml
 plotly
-tpdm
