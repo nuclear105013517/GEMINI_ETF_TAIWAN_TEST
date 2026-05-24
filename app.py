@@ -18,7 +18,7 @@ warnings.filterwarnings('ignore')
 # ==========================================
 # 介面設計：Apple.com 現代簡約風格 (自適應深淺色)
 # ==========================================
-st.set_page_config(page_title="量化決策系統 | Apple Style", page_icon="", layout="wide")
+st.set_page_config(page_title="台美股及ETF量化進場決策系統", layout="wide")
 
 apple_css = """
 <style>
@@ -193,7 +193,6 @@ class ETFAnalyzer:
         df['RSV'] = ((df['Close'] - low_9) / price_diff) * 100
         df['RSV'] = df['RSV'].fillna(50)
         
-        # [修復] 將 K 與 D 拆為兩行計算，避免 KeyError
         df['K'] = df['RSV'].ewm(com=2, adjust=False).mean()
         df['D'] = df['K'].ewm(com=2, adjust=False).mean()
         
@@ -295,7 +294,6 @@ class StockEvaluator:
         self.df['RSV'] = ((self.df['Close'] - low_min) / price_diff) * 100
         self.df['RSV'] = self.df['RSV'].fillna(50)
         
-        # [修復] 將 K 與 D 拆為兩行計算，避免 KeyError
         self.df['K'] = self.df['RSV'].ewm(com=2, adjust=False).mean()
         self.df['D'] = self.df['K'].ewm(com=2, adjust=False).mean()
 
@@ -457,7 +455,7 @@ class MasterRoutingSystem:
 # 網頁 UI 綁定層 (全新 Apple Style Layout)
 # ==========================================
 st.markdown("<h1 style='text-align: center; margin-bottom: 5px; font-weight: 700; letter-spacing: -1px;'> Quantfolio 決策系統</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: gray; margin-bottom: 30px;'>結合基本面、技術面與籌碼面的量化模型</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: gray; margin-bottom: 30px;'>結合基本面、技術面與籌碼面的法人級量化模型</p>", unsafe_allow_html=True)
 
 # 頂部搜尋區塊放置在漂亮的卡片中
 with st.container():
@@ -589,8 +587,9 @@ if run_btn:
                 st.markdown("### 法人籌碼動能 (Institutional Chips)")
                 st.info("💡 說明：以下列出系統解析出的三大法人買賣超數據。")
                 
-                # 將原核心模組中的 institutional_data 挖出來展示
-                inst_data = core_engine.institutional_data
+                # 【修復點】：使用 getattr 安全地抓取，防止 StockEvaluator 找不到屬性
+                inst_data = getattr(core_engine, "institutional_data", None)
+                
                 if inst_data:
                     # 處理個股(Dict)與ETF(List/Dict)結構可能不同的情況
                     st.write(f"**更新日期：** {inst_data.get('date', '近期')}")
@@ -599,7 +598,7 @@ if run_btn:
                     ci2.metric("投信買賣超 (張)", f"{inst_data.get('sitc', 0):+,}")
                     ci3.metric("自營商買賣超 (張)", f"{inst_data.get('dealer', 0):+,}")
                 else:
-                    st.write("目前無可顯示的近期法人籌碼數據（可能為海外標的或 API 限制）。")
+                    st.write("目前無可顯示的近期法人籌碼數據（個股動態籌碼分已於報告中文字呈現，或為海外標的限制）。")
                     
                 st.write("---")
                 st.markdown("### 券商分點進出 (Broker Branches)")
