@@ -454,7 +454,7 @@ class MasterRoutingSystem:
 # ==========================================
 # 網頁 UI 綁定層 (全新 Apple Style Layout)
 # ==========================================
-st.markdown("<h1 style='text-align: center; margin-bottom: 5px; font-weight: 700; letter-spacing: -1px;'> Quantfolio 決策系統</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; margin-bottom: 5px; font-weight: 700; letter-spacing: -1px;'>台美股及ETF量化進場決策系統</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: gray; margin-bottom: 30px;'>結合基本面、技術面與籌碼面的法人級量化模型</p>", unsafe_allow_html=True)
 
 # 頂部搜尋區塊放置在漂亮的卡片中
