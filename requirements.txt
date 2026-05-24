@@ -7,3 +7,4 @@ requests
 tqdm
 pydantic<2.0.0
 lxml
+plotly
